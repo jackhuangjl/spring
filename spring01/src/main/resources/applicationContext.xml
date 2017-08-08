@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:mvc="http://www.springframework.org/schema/mvc"
+	xmlns:p="http://www.springframework.org/schema/p"
+	xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:jdbc="http://www.springframework.org/schema/jdbc"
+	xsi:schemaLocation="http://www.springframework.org/schema/jdbc http://www.springframework.org/schema/jdbc/spring-jdbc-4.3.xsd
+		http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc-4.3.xsd
+		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.3.xsd
+		http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-4.3.xsd
+		http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-4.3.xsd">
+
+    <!-- 启用spring 注解 -->
+    <context:component-scan base-package="com.service"/>
+	<!--从Spring提供的参考手册中我们得知该配置的功能是扫描配置的base-package包下的所有使用了@Component注解的类，并且将它们自动注册到容器中，同时也扫描@Controller，@Service，@Respository这三个注解，因为他们是继承自@Component -->    
+    <context:component-scan base-package="com.dao.Imp"/>
+    <context:component-scan base-package="com.controller"/>
+   
+	<!--<context:annotation-config />-->
+	<!-- <context:annotation-config /> 配置默认打开了@Required、@Autowired、 @PostConstruct、@PersistenceContext、@Resource、@PreDestroy等注解 
+		  使用了 <context:component-scan base-package=""/> 可以不进行<context:annotation-config />配置
+	 -->
+    <!-- <mvc:annotation-driven /> -->
+    <!-- 这个是SpringMVC必须要配置的，因为它声明了@RequestMapping、@RequestBody、@ResponseBody等。并且，该配置默认加载很多的参数绑定方法，比如json转换解析器等。 --> 
+ 
+ 
+	<context:property-placeholder location="classpath:jdbc.properties"/>
+    <!--配置数据源 -->
+    <bean id="DataSource"
+        class="com.mchange.v2.c3p0.ComboPooledDataSource">
+        <property name="driverClass" value="${jdbc.driverClassName}" />
+        <property name="jdbcUrl" value="${jdbc.url}" />
+        <property name="user" value="${jdbc.username}" />
+        <property name="password" value="${jdbc.password}" />
+        <property name="initialPoolSize" value="3"/>
+        <property name="maxPoolSize" value="6"/>
+        <property name="maxStatements" value="100"/>
+        <property name="acquireIncrement" value="2"/>
+    </bean>	
+        
+    <bean id="jdbctemple" class="org.springframework.jdbc.core.JdbcTemplate">
+    	<property name = "dataSource" ref="DataSource"> </property>
+    </bean>
+    
+	<bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+		<property name="dataSource" ref="DataSource"></property>
+	</bean>
+<!--  
+	<tx:advice id="trantest" transaction-manager="transactionManager">
+		<tx:attributes>
+			<tx:method name="test" read-only="false"/>
+			<tx:method name="*" propagation="REQUIRED" read-only="false"/> 
+			<tx:method name="Update" read-only="false"/>
+		</tx:attributes>
+	</tx:advice>
+    <aop:config> 
+ -->   
+<!--    <aop:pointcut expression="execution(* com.service.UserService.*(..))" id="userservice"/>
+     	<aop:advisor advice-ref="trantest" pointcut-ref="userservice" />
+ --> 
+		<!-- 对于事物的管理回滚，不能再controller层生效  因为controller层是在spring-mvc中注册扫描的  然而spring 容器是 spring-mvc的父容器 
+			   对于事物的管理一般只在spring容器的<context>也就是上下文中的bean生效，所以以下配置为controller的是事物无法进行回滚，也就是没有进行事物的管理
+		 -->
+		 <!--   <aop:pointcut expression="execution(* com.controller.HandlController.*(..))" id="control"/>
+		     	<aop:advisor advice-ref="trantest" pointcut-ref="control" />-->
+ <!--   </aop:config>  -->
+
+	<!-- 注解方式 -->
+    <tx:annotation-driven/>
+    
+  <!--   
+     <bean id="userDaoimp" class="com.dao.Imp.UserDaoImp" />
+      <property name = "userJdbcTemplate" ref="jdbctemple"> </property>
+    </bean>
+	
+    <bean id="userservice" class="com.service.UserService"/>
+    -->
+
+</beans>
